@@ -1,0 +1,70 @@
+#
+#  Servicio de agregación de LOG's con fluentd Crea varios contenedores para ofrecer un servicio de agregación de Log's
+#
+#                                                   
+#   +----------------+                               
+#   |  contenedor A  |                               
+#   |   rsyslogd ----|-----                                  
+#   +----------------+     \                                 
+#   +----------------+      \    (*) este contenedor        
+#   |  contenedor B  |       \   +------------+       +------------+
+#   |   rsyslogd ----|-------+-> |  fluentd   |------>| es+kibana  |
+#   +----------------+       /   +------------+       +------------+
+#           :               :
+#   +----------------+     /
+#   |  contenedor x..|    / 
+#   |   rsyslogd ----|---/
+#   +----------------+   
+#
+
+##  ===========================================================================
+#     Elasticsearch + Kibana para almacenar y analizar los logs
+#
+#   Ejemplo de ejecución manual interactiva para debug: 
+#   docker run -t -i -p 9200:9200 -p 8081:80 -v /Apps/data/log/elasticsearch/data/:/data --name elasticsearch_1 luispa/base-eskibana /bin/bash
+
+eskibana:
+
+  image: luispa/base-eskibana
+
+  expose:
+   - "9200"
+   - "80"
+
+  # 
+  ports:
+    - "9200:9200"
+    - "8081:80"
+
+  volumes:
+  - "/Apps/data/log/elasticsearch/data/:/data"
+  - "/etc/localtime:/etc/localtime:ro"
+
+  command: supervisord -n -c /etc/supervisor/supervisord.conf
+
+##  ===========================================================================
+#  Fluentd para procesamiento de los logs
+#
+#   Ejemplo de ejecución manual interactiva para debug: 
+#   docker run -t -i -e FLUENTD_PORT=24224 -p 24224:24224 --name fluentd_1 --link eskibana_1:eskibana luispa/base-fluentd /bin/bash
+fluentd:
+  
+  image: luispa/base-fluentd
+  
+  environment:
+    FLUENTD_PORT: 24224
+  
+  # Puerto por el que escucho a rsyslog's remotos
+  ports:
+    - "24224:24224"
+
+  volumes:
+  - "/etc/localtime:/etc/localtime:ro"
+
+#  - "/Apps/data/correo/elasticsearch/data/:/data"
+ 
+  links:
+   - eskibana
+
+  command: supervisord -n -c /etc/supervisor/supervisord.conf
+
