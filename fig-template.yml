@@ -37,8 +37,8 @@ eskibana:
     - "8081:80"
 
   volumes:
-  - "/Apps/data/log/elasticsearch/data/:/data"
-  - "/etc/localtime:/etc/localtime:ro"
+    - "/Apps/data/log/elasticsearch/data/:/data"
+    - "/Apps/data/tz:/config/tz"
 
   command: supervisord -n -c /etc/supervisor/supervisord.conf
 
@@ -59,7 +59,7 @@ fluentd:
     - "24224:24224"
 
   volumes:
-  - "/etc/localtime:/etc/localtime:ro"
+    - "/Apps/data/tz:/config/tz"
 
 #  - "/Apps/data/correo/elasticsearch/data/:/data"
  
